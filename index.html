@@ -3,697 +3,533 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>表格行对比工具</title>
+<title>多条件数据合并工具</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500&display=swap');
 
-  :root {
-    --bg: #0f0f0f;
-    --surface: #1a1a1a;
-    --surface2: #222222;
-    --border: #2e2e2e;
-    --accent: #00e5a0;
-    --accent2: #0077ff;
-    --warn: #ffb020;
-    --danger: #ff4545;
-    --purple: #a78bfa;
-    --text: #f0f0f0;
-    --muted: #888;
-    --mono: 'IBM Plex Mono', monospace;
-    --sans: 'Noto Sans SC', sans-serif;
-  }
+:root {
+  --bg: #f4f3ef;
+  --surface: #ffffff;
+  --surface2: #eeede8;
+  --border: #dddbd3;
+  --old-color: #2d6a4f;
+  --old-light: #e8f5ee;
+  --old-border: #b7dfc8;
+  --new-color: #1a5fa8;
+  --new-light: #e8f0fb;
+  --new-border: #b3cff0;
+  --out-color: #6d28d9;
+  --out-light: #f0ecfe;
+  --out-border: #c4b5fd;
+  --danger: #b91c1c;
+  --danger-light: #fef2f2;
+  --warn: #b06000;
+  --warn-light: #fef3e0;
+  --text: #1a1a1a;
+  --muted: #6b6b6b;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'Noto Sans SC', sans-serif;
+}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; padding: 1.5rem 2rem 3rem; font-size: 14px; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
-    min-height: 100vh;
-    padding: 2rem;
-  }
+/* Header */
+.page-header { margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.logo { font-family: var(--mono); font-size: 19px; font-weight: 500; color: var(--old-color); }
+.logo-sub { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 3px; }
+.header-right { font-size: 11px; color: var(--muted); font-family: var(--mono); text-align: right; line-height: 1.7; }
 
-  header {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border);
-  }
+/* How-to strip */
+.howto { display: flex; gap: 0; margin-bottom: 1.2rem; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.howto-step { flex: 1; padding: 10px 14px; border-right: 1px solid var(--border); }
+.howto-step:last-child { border-right: none; }
+.howto-num { font-size: 10px; font-family: var(--mono); color: var(--muted); margin-bottom: 3px; }
+.howto-text { font-size: 12px; color: var(--text); line-height: 1.5; }
 
-  .logo {
-    font-family: var(--mono);
-    font-size: 22px;
-    color: var(--accent);
-    letter-spacing: -0.02em;
-  }
+/* Grid: 4 panels */
+.grid4 { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; gap: 10px; margin-bottom: 1rem; }
 
-  .logo span { color: var(--muted); }
+.panel { background: var(--surface); border-radius: 11px; overflow: hidden; }
+.panel.old-key  { border: 1.5px solid var(--old-border); }
+.panel.old-val  { border: 1.5px solid var(--old-border); }
+.panel.new-key  { border: 1.5px solid var(--new-border); }
+.panel.new-val  { border: 1.5px solid var(--new-border); }
 
-  .subtitle {
-    font-size: 12px;
-    color: var(--muted);
-    font-family: var(--mono);
-  }
+.panel-head { display: flex; align-items: center; justify-content: space-between; padding: 8px 13px; border-bottom: 1px solid var(--border); }
+.panel.old-key .panel-head, .panel.old-val .panel-head { background: var(--old-light); }
+.panel.new-key .panel-head, .panel.new-val .panel-head { background: var(--new-light); }
 
-  /* API Key bar */
-  .api-bar {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 1.5rem;
-  }
+.panel-label { font-size: 11px; font-family: var(--mono); font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; }
+.old-key .panel-label, .old-val .panel-label { color: var(--old-color); }
+.new-key .panel-label, .new-val .panel-label { color: var(--new-color); }
 
-  .api-bar label {
-    font-size: 12px;
-    font-family: var(--mono);
-    color: var(--accent);
-    white-space: nowrap;
-  }
+.panel-badge { font-size: 10px; font-family: var(--mono); padding: 2px 8px; border-radius: 20px; }
+.old-key .panel-badge, .old-val .panel-badge { background: var(--old-light); color: var(--old-color); border: 1px solid var(--old-border); }
+.new-key .panel-badge, .new-val .panel-badge { background: var(--new-light); color: var(--new-color); border: 1px solid var(--new-border); }
 
-  .api-bar input {
-    flex: 1;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 7px 12px;
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 12px;
-    outline: none;
-  }
+.row-count { font-size: 11px; font-family: var(--mono); color: var(--muted); }
 
-  .api-bar input:focus { border-color: var(--accent); }
+textarea {
+  width: 100%; height: 160px;
+  background: var(--surface); border: none;
+  padding: 10px 13px;
+  color: var(--text); font-family: var(--mono); font-size: 12px; line-height: 1.8;
+  resize: vertical; outline: none;
+}
+textarea::placeholder { color: #c0bfba; }
 
-  .api-status {
-    font-size: 11px;
-    font-family: var(--mono);
-    padding: 4px 10px;
-    border-radius: 20px;
-    white-space: nowrap;
-  }
+/* Actions */
+.actions { display: flex; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center; }
+button { font-family: var(--mono); font-size: 12px; cursor: pointer; border-radius: 8px; padding: 8px 16px; border: 1px solid var(--border); background: var(--surface); color: var(--text); transition: all 0.12s; white-space: nowrap; }
+button:hover { background: var(--surface2); }
+button:active { transform: scale(0.98); }
+button.primary { background: var(--old-color); color: #fff; border-color: var(--old-color); font-weight: 500; }
+button.primary:hover { background: #235a40; }
+button.btn-purple { background: var(--out-color); color: #fff; border-color: var(--out-color); font-weight: 500; }
+button.btn-purple:hover { background: #5b21b6; }
+button.ghost { color: var(--muted); }
 
-  .api-status.ok { background: #00e5a022; color: var(--accent); }
-  .api-status.empty { background: #ffb02022; color: var(--warn); }
+/* Validation error */
+.val-error { background: var(--danger-light); border: 1px solid #f0b3b3; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: var(--danger); font-family: var(--mono); margin-bottom: 1rem; display: none; }
+.val-error.visible { display: block; }
 
-  /* Data input grid */
-  .input-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 1.5rem;
-  }
+/* Result section */
+.result-section { display: none; }
+.result-section.visible { display: block; }
 
-  .panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
-  }
+/* Stats */
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 1.2rem; }
+.stat { border-radius: 10px; padding: 10px 12px; border: 1px solid transparent; }
+.stat-label { font-size: 10px; font-family: var(--mono); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-val { font-size: 24px; font-family: var(--mono); font-weight: 500; }
+.s-green  { background: var(--old-light);  border-color: var(--old-border);  }
+.s-green  .stat-label, .s-green  .stat-val { color: var(--old-color); }
+.s-blue   { background: var(--new-light);  border-color: var(--new-border);  }
+.s-blue   .stat-label, .s-blue   .stat-val { color: var(--new-color); }
+.s-danger { background: var(--danger-light); border-color: #f0b3b3; }
+.s-danger .stat-label, .s-danger .stat-val { color: var(--danger); }
+.s-warn   { background: var(--warn-light); border-color: #f0d090; }
+.s-warn   .stat-label, .s-warn   .stat-val { color: var(--warn); }
 
-  .panel-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface2);
-  }
+/* Result table */
+.section-label { font-size: 11px; font-family: var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; font-weight: 500; }
+.table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 11px; overflow: auto; margin-bottom: 1.5rem; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; font-family: var(--mono); }
+thead th { background: var(--surface2); padding: 9px 12px; text-align: left; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; border-bottom: 1px solid var(--border); white-space: nowrap; }
+tbody td { padding: 8px 12px; border-bottom: 1px solid #f0efe9; color: var(--text); vertical-align: middle; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+tbody tr:last-child td { border-bottom: none; }
 
-  .panel-title {
-    font-size: 11px;
-    font-family: var(--mono);
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
+tr.r-match   { background: #fff; }
+tr.r-new     { background: #f5f0fd; }
+tr.r-deleted { background: var(--danger-light); }
+tr.r-empty   { background: #fafaf8; }
 
-  .panel-title b { color: var(--accent); }
+.tag { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 20px; font-family: var(--mono); white-space: nowrap; }
+.tag-match   { background: var(--old-light);    color: var(--old-color); }
+.tag-new     { background: var(--out-light);    color: var(--out-color); }
+.tag-deleted { background: var(--danger-light); color: var(--danger);    }
+.tag-empty   { background: var(--surface2);     color: var(--muted);     }
 
-  .row-count {
-    font-size: 11px;
-    font-family: var(--mono);
-    color: var(--muted);
-  }
+.muted-cell { color: var(--muted); }
+.val-out { color: var(--old-color); font-weight: 500; }
+.val-new  { color: var(--out-color); font-weight: 500; }
+.val-del  { color: var(--danger); }
 
-  textarea {
-    width: 100%;
-    height: 220px;
-    background: transparent;
-    border: none;
-    padding: 12px 14px;
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 12px;
-    line-height: 1.7;
-    resize: vertical;
-    outline: none;
-  }
+/* Output box */
+.out-box { background: var(--surface); border: 1.5px solid var(--out-border); border-radius: 11px; overflow: hidden; }
+.out-head { padding: 12px 16px; background: var(--out-light); border-bottom: 1px solid var(--out-border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.out-head-title { font-size: 13px; font-weight: 500; color: var(--out-color); }
+.out-head-desc  { font-size: 11px; color: #7c3aed; margin-top: 2px; font-family: var(--mono); }
+.out-ta { width: 100%; min-height: 180px; max-height: 340px; background: var(--surface); border: none; padding: 14px 16px; font-family: var(--mono); font-size: 12px; line-height: 1.8; color: var(--text); resize: vertical; outline: none; }
+.out-foot { padding: 10px 16px; border-top: 1px solid var(--out-border); background: var(--out-light); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.out-hint { font-size: 11px; color: #7c3aed; font-family: var(--mono); }
 
-  textarea::placeholder { color: #444; }
-
-  /* Actions */
-  .actions {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
-  }
-
-  button {
-    font-family: var(--mono);
-    font-size: 12px;
-    cursor: pointer;
-    border-radius: 8px;
-    padding: 9px 18px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text);
-    transition: all 0.15s;
-  }
-
-  button:hover { background: var(--surface2); border-color: #444; }
-
-  button.primary {
-    background: var(--accent);
-    color: #000;
-    border-color: var(--accent);
-    font-weight: 500;
-  }
-
-  button.primary:hover { opacity: 0.85; }
-  button.primary:disabled { opacity: 0.4; cursor: not-allowed; }
-
-  button.demo { border-color: var(--accent2); color: var(--accent2); }
-  button.demo:hover { background: #0077ff11; }
-
-  /* Loading */
-  .loading {
-    display: none;
-    align-items: center;
-    gap: 10px;
-    font-size: 13px;
-    font-family: var(--mono);
-    color: var(--accent);
-    padding: 1rem 0;
-  }
-
-  .loading.visible { display: flex; }
-
-  .spinner {
-    width: 16px; height: 16px;
-    border: 2px solid #333;
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-  }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* Stats */
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
-    margin-bottom: 1.5rem;
-  }
-
-  .stat {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 14px;
-  }
-
-  .stat-label {
-    font-size: 10px;
-    font-family: var(--mono);
-    color: var(--muted);
-    margin-bottom: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-
-  .stat-val {
-    font-size: 26px;
-    font-family: var(--mono);
-    font-weight: 500;
-  }
-
-  .c-green { color: var(--accent); }
-  .c-blue { color: var(--accent2); }
-  .c-warn { color: var(--warn); }
-  .c-danger { color: var(--danger); }
-  .c-purple { color: var(--purple); }
-
-  /* Result table */
-  .result-section { display: none; }
-  .result-section.visible { display: block; }
-
-  .table-wrap {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: auto;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-    font-family: var(--mono);
-  }
-
-  thead th {
-    background: var(--surface2);
-    padding: 10px 14px;
-    text-align: left;
-    font-size: 10px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    border-bottom: 1px solid var(--border);
-    white-space: nowrap;
-  }
-
-  tbody td {
-    padding: 9px 14px;
-    border-bottom: 1px solid #1e1e1e;
-    color: var(--text);
-    vertical-align: middle;
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  tbody tr:last-child td { border-bottom: none; }
-
-  tr.row-same {}
-  tr.row-moved { background: #0077ff09; }
-  tr.row-changed { background: #ffb02009; }
-  tr.row-missing { background: #ff454509; }
-  tr.row-new { background: #a78bfa09; }
-
-  .tag {
-    display: inline-block;
-    font-size: 10px;
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-family: var(--mono);
-    white-space: nowrap;
-  }
-
-  .tag-same { background: #00e5a022; color: var(--accent); border: 1px solid #00e5a033; }
-  .tag-moved { background: #0077ff22; color: var(--accent2); border: 1px solid #0077ff33; }
-  .tag-changed { background: #ffb02022; color: var(--warn); border: 1px solid #ffb02033; }
-  .tag-missing { background: #ff454522; color: var(--danger); border: 1px solid #ff454533; }
-  .tag-new { background: #a78bfa22; color: var(--purple); border: 1px solid #a78bfa33; }
-
-  .diff-pos { color: var(--warn); }
-  .diff-neg { color: var(--accent2); }
-  .muted { color: var(--muted); }
-
-  /* AI analysis box */
-  .ai-box {
-    background: var(--surface);
-    border: 1px solid #00e5a033;
-    border-radius: 10px;
-    padding: 16px 20px;
-    margin-bottom: 1.5rem;
-    display: none;
-  }
-
-  .ai-box.visible { display: block; }
-
-  .ai-box-head {
-    font-size: 11px;
-    font-family: var(--mono);
-    color: var(--accent);
-    margin-bottom: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-
-  .ai-box-body {
-    font-size: 13px;
-    line-height: 1.8;
-    color: #ccc;
-    white-space: pre-wrap;
-  }
-
-  /* Legend */
-  .legend {
-    display: flex;
-    gap: 14px;
-    flex-wrap: wrap;
-    margin-bottom: 1rem;
-  }
-
-  .lg { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); font-family: var(--mono); }
-
-  @media (max-width: 768px) {
-    .input-grid { grid-template-columns: 1fr; }
-    .stats { grid-template-columns: repeat(3, 1fr); }
-    body { padding: 1rem; }
-  }
+@media (max-width: 680px) {
+  .grid4 { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: repeat(2,1fr); }
+  .howto { flex-direction: column; }
+  body { padding: 1rem; }
+}
 </style>
 </head>
 <body>
 
-<header>
+<div class="page-header">
   <div>
-    <div class="logo">row<span>_</span>diff</div>
-    <div class="subtitle" style="margin-top:4px">表格行变动对比工具 · Claude API 驱动</div>
+    <div class="logo">vlookup_merge</div>
+    <div class="logo-sub">多条件跨表数据合并 · 纯本地运行 · 不联网</div>
   </div>
-  <div class="subtitle">粘贴数据 → 一键对比</div>
-</header>
-
-<!-- API Key -->
-<div class="api-bar">
-  <label>API_KEY</label>
-  <input type="password" id="api-key" placeholder="sk-ant-api03-..." oninput="updateApiStatus()">
-  <div class="api-status empty" id="api-status">未设置</div>
+  <div class="header-right">数据不上传<br>支持从 Excel 直接复制</div>
 </div>
 
-<!-- Input -->
-<div class="input-grid">
-  <div class="panel">
-    <div class="panel-head">
-      <div class="panel-title"><b>旧数据</b> · 一小时前</div>
-      <div class="row-count" id="old-count">0 行</div>
-    </div>
-    <textarea id="old-data" placeholder="粘贴旧数据，每行一条&#10;支持 Tab / 逗号 分隔的多列&#10;&#10;例如：&#10;苹果	10	新鲜&#10;香蕉	5	熟透&#10;橙子	8	进口" oninput="countRows('old')"></textarea>
+<!-- 说明步骤 -->
+<div class="howto">
+  <div class="howto-step">
+    <div class="howto-num">STEP 1</div>
+    <div class="howto-text">左侧粘贴<b>旧数据</b>（一小时前备份）的条件列和数据列</div>
   </div>
-  <div class="panel">
-    <div class="panel-head">
-      <div class="panel-title"><b>新数据</b> · 当前状态</div>
-      <div class="row-count" id="new-count">0 行</div>
-    </div>
-    <textarea id="new-data" placeholder="粘贴当前数据，格式同左侧&#10;&#10;例如：&#10;苹果	10	新鲜&#10;橙子	8	进口&#10;香蕉	5	熟透&#10;葡萄	12	国产" oninput="countRows('new')"></textarea>
+  <div class="howto-step">
+    <div class="howto-num">STEP 2</div>
+    <div class="howto-text">右侧粘贴<b>当前数据</b>的条件列和数据列（同范围行数）</div>
+  </div>
+  <div class="howto-step">
+    <div class="howto-num">STEP 3</div>
+    <div class="howto-text">点击对比，工具按条件匹配，输出修正后的数据列</div>
+  </div>
+  <div class="howto-step">
+    <div class="howto-num">STEP 4</div>
+    <div class="howto-text">复制输出结果，粘贴回表格对应列，行号完全对齐</div>
   </div>
 </div>
 
-<!-- Actions -->
+<!-- 四个输入框 -->
+<div class="grid4">
+  <!-- 旧条件列 -->
+  <div class="panel old-key">
+    <div class="panel-head">
+      <div class="panel-label">旧数据 · 条件列</div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:11px;font-family:var(--mono);color:var(--muted)">行数:</span>
+        <input type="number" id="rows-ok" min="1" style="width:54px;font-family:var(--mono);font-size:11px;padding:2px 6px;border:1px solid var(--border);border-radius:5px;background:var(--bg);color:var(--text);outline:none" placeholder="自动">
+        <div class="row-count" id="cnt-ok">0 行</div>
+      </div>
+    </div>
+    <textarea id="old-key"
+      placeholder="粘贴旧数据的条件列&#10;可以是1列或多列（Tab分隔）&#10;&#10;示例（1列）：&#10;张三&#10;李四&#10;王五&#10;&#10;示例（2列）：&#10;张三	A组&#10;李四	B组&#10;王五	A组"
+      oninput="onInput('ok')"></textarea>
+  </div>
+
+  <!-- 新条件列 -->
+  <div class="panel new-key">
+    <div class="panel-head">
+      <div class="panel-label">当前数据 · 条件列</div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:11px;font-family:var(--mono);color:var(--muted)">行数:</span>
+        <input type="number" id="rows-nk" min="1" style="width:54px;font-family:var(--mono);font-size:11px;padding:2px 6px;border:1px solid var(--border);border-radius:5px;background:var(--bg);color:var(--text);outline:none" placeholder="自动">
+        <div class="row-count" id="cnt-nk">0 行</div>
+      </div>
+    </div>
+    <textarea id="new-key"
+      placeholder="粘贴当前数据的条件列&#10;结构与旧条件列一致&#10;&#10;示例：&#10;小加&#10;张三&#10;李四&#10;小赵&#10;小李&#10;小帅&#10;王五"
+      oninput="onInput('nk')"></textarea>
+  </div>
+
+  <!-- 旧数据列 -->
+  <div class="panel old-val">
+    <div class="panel-head">
+      <div class="panel-label">旧数据 · 数据列</div>
+      <div class="row-count" id="cnt-ov">0 行</div>
+    </div>
+    <textarea id="old-val"
+      placeholder="粘贴旧数据的数据列&#10;与旧条件列行数必须一致&#10;&#10;示例：&#10;12&#10;22&#10;33&#10;34&#10;44&#10;55"
+      oninput="onInput('ov')"></textarea>
+  </div>
+
+  <!-- 新数据列 -->
+  <div class="panel new-val">
+    <div class="panel-head">
+      <div class="panel-label">当前数据 · 数据列</div>
+      <div class="row-count" id="cnt-nv">0 行</div>
+    </div>
+    <textarea id="new-val"
+      placeholder="粘贴当前数据的数据列&#10;与当前条件列行数必须一致&#10;&#10;示例：&#10;66&#10;12&#10;22&#10;34&#10;44&#10;55&#10;33"
+      oninput="onInput('nv')"></textarea>
+  </div>
+</div>
+
+<div class="val-error" id="val-error"></div>
+
 <div class="actions">
-  <button class="primary" id="compare-btn" onclick="runCompare()">▶ 开始对比</button>
-  <button class="demo" onclick="loadDemo()">载入示例</button>
-  <button onclick="clearAll()">清空</button>
-  <button onclick="exportCSV()" id="export-btn" style="display:none">↓ 导出 CSV</button>
+  <button class="primary" onclick="runMerge()">▶ 开始对比合并</button>
+  <button onclick="loadDemo()">载入示例</button>
+  <button class="ghost" onclick="clearAll()">清空</button>
+  <span id="export-wrap" style="display:none">
+    <button onclick="exportCSV()">↓ 导出明细 CSV</button>
+  </span>
 </div>
 
-<div class="loading" id="loading">
-  <div class="spinner"></div>
-  <span>正在调用 Claude API 智能分析中...</span>
-</div>
-
-<!-- Stats -->
+<!-- 结果区 -->
 <div class="result-section" id="result-section">
+
   <div class="stats" id="stats-row"></div>
 
-  <!-- AI analysis -->
-  <div class="ai-box" id="ai-box">
-    <div class="ai-box-head">◆ Claude AI 分析摘要</div>
-    <div class="ai-box-body" id="ai-text"></div>
-  </div>
-
-  <!-- Legend -->
-  <div class="legend">
-    <div class="lg"><span class="tag tag-same">未变动</span> 内容行号均一致</div>
-    <div class="lg"><span class="tag tag-moved">行号移动</span> 内容同，位置变了</div>
-    <div class="lg"><span class="tag tag-changed">内容变动</span> 行内容被修改</div>
-    <div class="lg"><span class="tag tag-missing">已删除</span> 旧有新无</div>
-    <div class="lg"><span class="tag tag-new">新增行</span> 旧无新有</div>
-  </div>
-
-  <!-- Table -->
+  <div class="section-label" style="margin-bottom:8px">逐行对比明细</div>
   <div class="table-wrap">
     <table>
       <thead>
         <tr>
-          <th>旧行号</th>
-          <th>新行号</th>
-          <th>行号差</th>
-          <th>旧数据内容</th>
-          <th>新数据内容</th>
+          <th>行号</th>
+          <th>当前条件</th>
+          <th>旧数据值</th>
+          <th>当前数据值</th>
+          <th>输出结果</th>
           <th>状态</th>
-          <th>AI备注</th>
         </tr>
       </thead>
       <tbody id="result-body"></tbody>
     </table>
   </div>
+
+  <!-- 输出结果 -->
+  <div class="out-box">
+    <div class="out-head">
+      <div>
+        <div class="out-head-title">✅ 输出结果（可直接粘贴回表格）</div>
+        <div class="out-head-desc" id="out-desc"></div>
+      </div>
+      <button class="btn-purple" onclick="copyOutput(this)">复制全部</button>
+    </div>
+    <textarea class="out-ta" id="out-ta" readonly></textarea>
+    <div class="out-foot">
+      <span class="out-hint">行号与当前表格完全对应 · 空行保留占位 · 粘贴后不会错位</span>
+    </div>
+  </div>
+
 </div>
 
 <script>
-let lastResults = [];
+let lastRows = [];
 
-function updateApiStatus() {
-  const key = document.getElementById('api-key').value.trim();
-  const el = document.getElementById('api-status');
-  if (key.startsWith('sk-ant')) {
-    el.textContent = '已设置';
-    el.className = 'api-status ok';
-  } else {
-    el.textContent = '未设置';
-    el.className = 'api-status empty';
+const IDs = {
+  ok: 'old-key', ov: 'old-val',
+  nk: 'new-key', nv: 'new-val'
+};
+
+function parseCol(text, totalRows) {
+  // 完全不裁剪，split后原样返回
+  // 如果指定了totalRows，精确取前totalRows行（不足补空，多余截断）
+  if (!text) return totalRows ? Array(totalRows).fill('') : [];
+  const lines = text.split('\n');
+  if (!totalRows) return lines;
+  // 精确对齐到totalRows行
+  while (lines.length < totalRows) lines.push('');
+  return lines.slice(0, totalRows);
+}
+
+function normKey(s) {
+  return (s || '').trim().replace(/[ \t]+/g, '\t').toLowerCase();
+}
+
+function onInput(id) {
+  const lines = parseCol(document.getElementById(IDs[id]).value);
+  document.getElementById('cnt-' + id).textContent = lines.length + ' 行';
+}
+
+function validate(oldKeys, oldVals, newKeys, newVals) {
+  const errors = [];
+  if (!oldKeys.length) errors.push('旧数据条件列不能为空');
+  if (!newKeys.length) errors.push('当前数据条件列不能为空');
+  // 行数校验：允许数据列比条件列多1行（textarea末尾多余换行），其余不一致才报错
+  const oldDiff = Math.abs(oldKeys.length - oldVals.length);
+  const newDiff = Math.abs(newKeys.length - newVals.length);
+  if (oldKeys.length && oldVals.length && oldDiff > 1)
+    errors.push(`旧数据：条件列 ${oldKeys.length} 行，数据列 ${oldVals.length} 行，行数不一致`);
+  if (newKeys.length && newVals.length && newDiff > 1)
+    errors.push(`当前数据：条件列 ${newKeys.length} 行，数据列 ${newVals.length} 行，行数不一致`);
+  return errors;
+}
+
+function runMerge() {
+  const errEl = document.getElementById('val-error');
+
+  // 读取用户填写的行数（如果填了就精确按这个数解析，没填就自动）
+  const okRows = parseInt(document.getElementById('rows-ok').value) || 0;
+  const nkRows = parseInt(document.getElementById('rows-nk').value) || 0;
+
+  const oldKeys = parseCol(document.getElementById('old-key').value, okRows || null);
+  const oldVals = parseCol(document.getElementById('old-val').value, okRows || null);
+  const newKeys = parseCol(document.getElementById('new-key').value, nkRows || null);
+  const newVals = parseCol(document.getElementById('new-val').value, nkRows || null);
+
+  // 更新行数显示
+  document.getElementById('cnt-ok').textContent = oldKeys.length + ' 行';
+  document.getElementById('cnt-ov').textContent = oldVals.length + ' 行';
+  document.getElementById('cnt-nk').textContent = newKeys.length + ' 行';
+  document.getElementById('cnt-nv').textContent = newVals.length + ' 行';
+
+  const errors = validate(oldKeys, oldVals, newKeys, newVals);
+  if (errors.length) {
+    errEl.innerHTML = errors.join('<br>');
+    errEl.className = 'val-error visible';
+    return;
   }
-}
+  errEl.className = 'val-error';
 
-function countRows(side) {
-  const text = document.getElementById(side + '-data').value;
-  const rows = text.trim() ? text.trim().split('\n').filter(l => l.trim()).length : 0;
-  document.getElementById(side + '-count').textContent = rows + ' 行';
-}
 
-function parseData(text) {
-  if (!text.trim()) return [];
-  return text.trim().split('\n')
-    .map((line, i) => ({ row: i + 1, raw: line.trim() }))
-    .filter(r => r.raw);
-}
 
-function norm(s) { return s.trim().replace(/\s+/g, ' '); }
-
-function localCompare(oldRows, newRows) {
-  const results = [];
-  const usedNew = new Set();
-
-  oldRows.forEach(old => {
-    const exactIdx = newRows.findIndex((n, i) => !usedNew.has(i) && norm(n.raw) === norm(old.raw) && n.row === old.row);
-    if (exactIdx !== -1) {
-      usedNew.add(exactIdx);
-      results.push({ type: 'same', oldRow: old.row, newRow: newRows[exactIdx].row, oldRaw: old.raw, newRaw: newRows[exactIdx].raw, diff: 0, note: '' });
-      return;
-    }
-    const movedIdx = newRows.findIndex((n, i) => !usedNew.has(i) && norm(n.raw) === norm(old.raw));
-    if (movedIdx !== -1) {
-      usedNew.add(movedIdx);
-      const mv = newRows[movedIdx];
-      results.push({ type: 'moved', oldRow: old.row, newRow: mv.row, oldRaw: old.raw, newRaw: mv.raw, diff: mv.row - old.row, note: '' });
-      return;
-    }
-    results.push({ type: 'missing', oldRow: old.row, newRow: '-', oldRaw: old.raw, newRaw: '', diff: '-', note: '' });
-  });
-
-  newRows.forEach((n, i) => {
-    if (!usedNew.has(i)) {
-      results.push({ type: 'new', oldRow: '-', newRow: n.row, oldRaw: '', newRaw: n.raw, diff: '-', note: '' });
+  // 构建旧数据的条件→值映射（允许重复key时取第一条）
+  const oldMap = new Map();
+  oldKeys.forEach((k, i) => {
+    const nk = normKey(k);
+    if (nk && !oldMap.has(nk)) {
+      oldMap.set(nk, oldVals.length > i ? oldVals[i] : '');
     }
   });
 
-  results.sort((a, b) => {
-    const aO = typeof a.oldRow === 'number' ? a.oldRow : 9999;
-    const bO = typeof b.oldRow === 'number' ? b.oldRow : 9999;
-    return aO - bO;
-  });
+  // 逐行处理新数据
+  const rows = newKeys.map((nk, i) => {
+    const curKey  = nk;                              // 当前行条件（原始）
+    const curVal  = newVals.length > i ? newVals[i] : ''; // 当前行数据值
+    const normCur = normKey(nk);
+    const rowNum  = i + 1;
 
-  return results;
-}
-
-async function callClaudeAPI(oldRows, newRows, results) {
-  const key = document.getElementById('api-key').value.trim();
-  if (!key.startsWith('sk-ant')) return null;
-
-  const summary = results.map(r =>
-    `行${r.oldRow}→${r.newRow} [${r.type}]: 旧="${r.oldRaw}" 新="${r.newRaw}"`
-  ).join('\n');
-
-  const prompt = `你是一个数据分析助手。以下是两份表格数据的对比结果（旧数据 vs 新数据）：
-
-旧数据共 ${oldRows.length} 行，新数据共 ${newRows.length} 行。
-
-对比结果：
-${summary}
-
-请用中文简洁分析：
-1. 总体变动情况（几行未变、几行移位、几行删除、几行新增）
-2. 如果有行号移动，分析是否是整体平移还是局部调整
-3. 需要重点关注的异常情况
-4. 给出建议
-
-请控制在150字以内，直接给结论，不要重复列举数据。`;
-
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': key,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 500,
-      messages: [{ role: 'user', content: prompt }]
-    })
-  });
-
-  if (!resp.ok) throw new Error('API 请求失败: ' + resp.status);
-  const data = await resp.json();
-  return data.content?.[0]?.text || null;
-}
-
-async function runCompare() {
-  const oldText = document.getElementById('old-data').value;
-  const newText = document.getElementById('new-data').value;
-
-  if (!oldText.trim() && !newText.trim()) { alert('请先粘贴数据'); return; }
-
-  const oldRows = parseData(oldText);
-  const newRows = parseData(newText);
-  const results = localCompare(oldRows, newRows);
-  lastResults = results;
-
-  const hasKey = document.getElementById('api-key').value.trim().startsWith('sk-ant');
-  document.getElementById('compare-btn').disabled = true;
-  document.getElementById('loading').className = 'loading' + (hasKey ? ' visible' : '');
-
-  let aiText = null;
-  if (hasKey) {
-    try {
-      aiText = await callClaudeAPI(oldRows, newRows, results);
-    } catch (e) {
-      aiText = '⚠ API 调用失败: ' + e.message;
-    }
-  }
-
-  document.getElementById('loading').className = 'loading';
-  document.getElementById('compare-btn').disabled = false;
-
-  renderResults(results, aiText, oldRows.length, newRows.length);
-}
-
-function renderResults(results, aiText, oldTotal, newTotal) {
-  const same = results.filter(r => r.type === 'same').length;
-  const moved = results.filter(r => r.type === 'moved').length;
-  const changed = results.filter(r => r.type === 'changed').length;
-  const missing = results.filter(r => r.type === 'missing').length;
-  const added = results.filter(r => r.type === 'new').length;
-
-  document.getElementById('stats-row').innerHTML = `
-    <div class="stat"><div class="stat-label">未变动</div><div class="stat-val c-green">${same}</div></div>
-    <div class="stat"><div class="stat-label">行号移动</div><div class="stat-val c-blue">${moved}</div></div>
-    <div class="stat"><div class="stat-label">内容变动</div><div class="stat-val c-warn">${changed}</div></div>
-    <div class="stat"><div class="stat-label">已删除</div><div class="stat-val c-danger">${missing}</div></div>
-    <div class="stat"><div class="stat-label">新增行</div><div class="stat-val c-purple">${added}</div></div>
-  `;
-
-  const aiBox = document.getElementById('ai-box');
-  if (aiText) {
-    document.getElementById('ai-text').textContent = aiText;
-    aiBox.className = 'ai-box visible';
-  } else {
-    aiBox.className = 'ai-box';
-  }
-
-  const tbody = document.getElementById('result-body');
-  tbody.innerHTML = '';
-
-  results.forEach(r => {
-    const tr = document.createElement('tr');
-    tr.className = 'row-' + r.type;
-
-    let diffHtml = '<span class="muted">—</span>';
-    if (typeof r.diff === 'number') {
-      if (r.diff === 0) diffHtml = '<span class="muted">0</span>';
-      else if (r.diff > 0) diffHtml = `<span class="diff-pos">+${r.diff}</span>`;
-      else diffHtml = `<span class="diff-neg">${r.diff}</span>`;
+    if (!normCur) {
+      // 条件列是空 → 但数据列可能有内容（如"坏的内容"），直接保留数据列原样
+      return { rowNum, curKey: '', curVal, oldVal: '', output: curVal, status: curVal.trim() ? 'new' : 'empty' };
     }
 
-    const tagMap = {
-      same: '<span class="tag tag-same">未变动</span>',
-      moved: '<span class="tag tag-moved">行号移动</span>',
-      changed: '<span class="tag tag-changed">内容变动</span>',
-      missing: '<span class="tag tag-missing">已删除</span>',
-      new: '<span class="tag tag-new">新增行</span>'
-    };
-
-    const oldRowDisp = r.oldRow !== '-' ? r.oldRow : '<span class="muted">—</span>';
-    const newRowDisp = r.newRow !== '-' ? r.newRow : '<span class="muted">—</span>';
-    const oldContent = r.oldRaw ? `<span title="${r.oldRaw.replace(/"/g,'&quot;')}">${escHtml(r.oldRaw)}</span>` : '<span class="muted">—</span>';
-    const newContent = r.newRaw ? `<span title="${r.newRaw.replace(/"/g,'&quot;')}">${escHtml(r.newRaw)}</span>` : '<span class="muted">—</span>';
-
-    tr.innerHTML = `
-      <td>${oldRowDisp}</td>
-      <td>${newRowDisp}</td>
-      <td>${diffHtml}</td>
-      <td>${oldContent}</td>
-      <td>${newContent}</td>
-      <td>${tagMap[r.type]}</td>
-      <td class="muted">${r.note || ''}</td>
-    `;
-    tbody.appendChild(tr);
+    if (oldMap.has(normCur)) {
+      // 旧数据找到 → 用旧数据的值替换（修复出问题的数据）
+      const oldVal = oldMap.get(normCur);
+      return { rowNum, curKey, curVal, oldVal, output: oldVal, status: 'match' };
+    } else {
+      // 旧数据没有这个条件 → 新增行，完全保留新数据列原样，不动
+      return { rowNum, curKey, curVal, oldVal: '', output: curVal, status: 'new' };
+    }
   });
+
+  // 旧数据有但新数据条件列里没出现的 → 附加到末尾显示"已删除"（仅用于统计展示，不影响输出行号）
+  const newNormSet = new Set(newKeys.map(normKey).filter(Boolean));
+  const deletedKeys = [];
+  oldKeys.forEach((k, i) => {
+    const nk = normKey(k);
+    if (nk && !newNormSet.has(nk)) {
+      deletedKeys.push({ key: k, val: oldVals[i] || '' });
+    }
+  });
+
+  lastRows = rows;
+  renderStats(rows, deletedKeys.length);
+  renderTable(rows, deletedKeys);
+  renderOutput(rows);
 
   document.getElementById('result-section').className = 'result-section visible';
-  document.getElementById('export-btn').style.display = 'inline-block';
+  document.getElementById('export-wrap').style.display = 'inline';
 }
 
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function renderStats(rows, delCount) {
+  const matched = rows.filter(r => r.status === 'match').length;
+  const added   = rows.filter(r => r.status === 'new').length;
+  const empty   = rows.filter(r => r.status === 'empty').length;
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat s-green">
+      <div class="stat-label">条件匹配（用旧值）</div>
+      <div class="stat-val">${matched}</div>
+    </div>
+    <div class="stat s-blue">
+      <div class="stat-label">新增行（保留当前）</div>
+      <div class="stat-val">${added}</div>
+    </div>
+    <div class="stat s-danger">
+      <div class="stat-label">旧数据已删除</div>
+      <div class="stat-val">${delCount}</div>
+    </div>
+    <div class="stat s-warn">
+      <div class="stat-label">空行（占位保留）</div>
+      <div class="stat-val">${empty}</div>
+    </div>
+  `;
+}
+
+function renderTable(rows, deletedKeys) {
+  const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  const tagMap = {
+    match:   '<span class="tag tag-match">条件匹配→用旧值</span>',
+    new:     '<span class="tag tag-new">新增→保留当前</span>',
+    empty:   '<span class="tag tag-empty">空行</span>',
+  };
+
+  const mainRows = rows.map(r => {
+    const outHtml = r.status === 'match'
+      ? `<span class="val-out">${esc(r.output)}</span>`
+      : r.status === 'new'
+        ? `<span class="val-new">${esc(r.output)}</span>`
+        : `<span class="muted-cell">（空）</span>`;
+
+    return `<tr class="r-${r.status}">
+      <td>${r.rowNum}</td>
+      <td title="${esc(r.curKey)}">${r.curKey ? esc(r.curKey) : '<span class="muted-cell">—</span>'}</td>
+      <td>${r.oldVal ? esc(r.oldVal) : '<span class="muted-cell">—</span>'}</td>
+      <td>${r.curVal ? esc(r.curVal) : '<span class="muted-cell">—</span>'}</td>
+      <td>${outHtml}</td>
+      <td>${tagMap[r.status] || ''}</td>
+    </tr>`;
+  }).join('');
+
+  // 已删除行附加在最后（不占行号，仅展示）
+  const delRows = deletedKeys.map(d =>
+    `<tr class="r-deleted">
+      <td><span class="muted-cell">—</span></td>
+      <td title="${esc(d.key)}">${esc(d.key)}</td>
+      <td>${esc(d.val)}</td>
+      <td><span class="muted-cell">已从当前数据删除</span></td>
+      <td><span class="val-del">数据已删除</span></td>
+      <td><span class="tag tag-deleted">已删除</span></td>
+    </tr>`
+  ).join('');
+
+  document.getElementById('result-body').innerHTML = mainRows + delRows;
+}
+
+function renderOutput(rows) {
+  const lines = rows.map(r => r.output);
+  // 不去末尾空行，保持行号对齐
+  document.getElementById('out-ta').value = lines.join('\n');
+
+  const matched = rows.filter(r => r.status === 'match').length;
+  const added   = rows.filter(r => r.status === 'new').length;
+  const empty   = rows.filter(r => r.status === 'empty').length;
+  const outLines = lines.filter((l,i) => i < rows.length); // 严格按rows行数
+  document.getElementById('out-ta').value = outLines.join('\n');
+  document.getElementById('out-desc').textContent =
+    `输出共 ${rows.length} 行（与新条件列一致） · 匹配回填 ${matched} 行 · 新增保留 ${added} 行 · 空行占位 ${empty} 行`;
+}
+
+function copyOutput(btn) {
+  const ta = document.getElementById('out-ta');
+  ta.select();
+  try { document.execCommand('copy'); } catch(e) { navigator.clipboard.writeText(ta.value); }
+  const orig = btn.textContent;
+  btn.textContent = '✓ 已复制！';
+  setTimeout(() => btn.textContent = orig, 1800);
 }
 
 function exportCSV() {
-  if (!lastResults.length) return;
-  const header = '旧行号,新行号,行号差,旧数据内容,新数据内容,状态\n';
-  const rows = lastResults.map(r =>
-    [r.oldRow, r.newRow, r.diff, `"${r.oldRaw}"`, `"${r.newRaw}"`, r.type].join(',')
+  if (!lastRows.length) return;
+  const statusLabel = { match: '条件匹配', new: '新增行', empty: '空行' };
+  const header = '行号,当前条件,旧数据值,当前数据值,输出结果,状态\n';
+  const body = lastRows.map(r =>
+    [r.rowNum,
+     `"${(r.curKey||'').replace(/"/g,'""')}"`,
+     `"${(r.oldVal||'').replace(/"/g,'""')}"`,
+     `"${(r.curVal||'').replace(/"/g,'""')}"`,
+     `"${(r.output||'').replace(/"/g,'""')}"`,
+     statusLabel[r.status]||r.status
+    ].join(',')
   ).join('\n');
-  const blob = new Blob(['\uFEFF' + header + rows], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'row_diff_' + Date.now() + '.csv';
-  a.click(); URL.revokeObjectURL(url);
+  const blob = new Blob(['\uFEFF'+header+body], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'merge_result_'+Date.now()+'.csv'; a.click();
 }
 
 function loadDemo() {
-  document.getElementById('old-data').value = `苹果\t10\t新鲜
-香蕉\t5\t熟透
-橙子\t8\t进口
-葡萄\t12\t国产
-西瓜\t3\t当季
-芒果\t6\t海南`;
-  document.getElementById('new-data').value = `苹果\t10\t新鲜
-橙子\t8\t进口
-香蕉\t5\t熟透
-蓝莓\t20\t进口
-西瓜\t3\t当季
-芒果\t7\t海南`;
-  countRows('old'); countRows('new');
+  document.getElementById('old-key').value = `张三\n李四\n王五\n小赵\n小李\n小帅`;
+  document.getElementById('old-val').value = `12\n22\n33\n34\n44\n55`;
+  document.getElementById('new-key').value = `小加\n张三\n李四\n小赵\n小李\n小帅\n王五`;
+  document.getElementById('new-val').value = `66\n12\n22\n34\n44\n55\n33`;
+  ['ok','ov','nk','nv'].forEach(onInput);
 }
 
 function clearAll() {
-  document.getElementById('old-data').value = '';
-  document.getElementById('new-data').value = '';
+  ['old-key','old-val','new-key','new-val'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  ['ok','ov','nk','nv'].forEach(onInput);
   document.getElementById('result-section').className = 'result-section';
-  document.getElementById('export-btn').style.display = 'none';
-  countRows('old'); countRows('new');
+  document.getElementById('val-error').className = 'val-error';
+  document.getElementById('export-wrap').style.display = 'none';
 }
 </script>
 </body>
